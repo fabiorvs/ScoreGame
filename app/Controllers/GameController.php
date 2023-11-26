@@ -92,6 +92,7 @@ class GameController extends BaseController
         'game' => $game,
         'pontuacao' => $pontuacao,
         'posicao' => $position,
+        'atual' => $atual,
         'top10' => $top10,
         ];
         return $this->respond($response);
