@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use CodeIgniter\I18n\Time;
 use CodeIgniter\Model;
 
 class GameModel extends Model
@@ -50,5 +51,24 @@ class GameModel extends Model
         }
 
         return $top10;
+    }
+
+    public function getScore()
+    {
+        $score = $this->db->table($this->table)
+            ->select('nome, email, telefone, todosdias, data, game, pontuacao')
+            ->orderBy('game', 'ASC')
+            ->orderBy('pontuacao', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        foreach ($score as $key => &$player) {
+            $dataOriginal = $player['data'];
+            $time = Time::createFromFormat('Y-m-d H:i:s', $dataOriginal);
+            $dataFormatada = $time->toDateString();
+            $player['posicao'] = $this->getPosition($player['game'], $player['pontuacao'], $dataFormatada);
+        }
+
+        return $score;
     }
 }
