@@ -38,46 +38,28 @@ class GameController extends BaseController
                 // Se a nova pontuação for maior, atualiza a pontuação e define a anterior como não atual
                 $gameModel->update($existingScore['id'], ['atual' => 0]);
                 $atual = 1;
-                $data = [
-                    'nome' => $nome,
-                    'email' => $email,
-                    'telefone' => $telefone,
-                    'todosdias' => $todosdias,
-                    'game' => $game,
-                    'pontuacao' => $pontuacao,
-                    'data' => $data,
-                    'atual' => 1,
-                ];
+                $novo = 0;
             } else {
                 $atual = 0;
-                $data = [
-                    'nome' => $nome,
-                    'email' => $email,
-                    'telefone' => $telefone,
-                    'todosdias' => $todosdias,
-                    'game' => $game,
-                    'pontuacao' => $pontuacao,
-                    'data' => $data,
-                    'atual' => 0,
-                ];
-
+                $novo = 0;
             }
         } else {
             $atual = 1;
-            $data = [
-                'nome' => $nome,
-                'email' => $email,
-                'telefone' => $telefone,
-                'todosdias' => $todosdias,
-                'game' => $game,
-                'pontuacao' => $pontuacao,
-                'data' => $data,
-                'atual' => 1,
-            ];
+            $novo = 1;
         }
         // Gravar no banco de dados
+        $data = [
+            'nome' => $nome,
+            'email' => $email,
+            'telefone' => $telefone,
+            'todosdias' => $todosdias,
+            'game' => $game,
+            'pontuacao' => $pontuacao,
+            'data' => $data,
+            'atual' => $atual,
+        ];
         $gameModel->insertScore($data);
-        
+
         // Obter a posição do jogador
         $position = $gameModel->getPosition($game, $pontuacao, date('Y-m-d'));
 
@@ -86,14 +68,15 @@ class GameController extends BaseController
 
         // Montar a resposta
         $response = [
-        'nome' => $nome,
-        'email' => $email,
-        'telefone' => $telefone,
-        'game' => $game,
-        'pontuacao' => $pontuacao,
-        'posicao' => $position,
-        'atual' => $atual,
-        'top10' => $top10,
+            'nome' => $nome,
+            'email' => $email,
+            'telefone' => $telefone,
+            'game' => $game,
+            'pontuacao' => $pontuacao,
+            'posicao' => $position,
+            'atual' => $atual,
+            'novo' => $novo,
+            'top10' => $top10,
         ];
         return $this->respond($response);
     }
