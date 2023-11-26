@@ -11,7 +11,7 @@ class GameController extends BaseController
 
     public function saveScore()
     {
-
+        $gameModel = new GameModel();
         // Verifica se o token está presente no cabeçalho da requisição
         $token = $this->request->getHeader('Authorization');
 
@@ -28,23 +28,56 @@ class GameController extends BaseController
         $todosdias = $json->todosdias ?? '';
         $game = $json->game ?? '';
         $pontuacao = $json->pontuacao ?? 0;
+        $data = date('Y-m-d H:i:s');
 
-        // Validar os dados conforme necessário
+        // Verifica se já existe uma pontuação para o jogador no jogo e na data atual
+        $existingScore = $gameModel->existingScore($email, $game, $data);
 
+        if ($existingScore) {
+            if ($pontuacao > $existingScore['pontuacao']) {
+                // Se a nova pontuação for maior, atualiza a pontuação e define a anterior como não atual
+                $gameModel->update($existingScore['id'], ['atual' => 0]);
+                $atual = 1;
+                $data = [
+                    'nome' => $nome,
+                    'email' => $email,
+                    'telefone' => $telefone,
+                    'todosdias' => $todosdias,
+                    'game' => $game,
+                    'pontuacao' => $pontuacao,
+                    'data' => $data,
+                    'atual' => 1,
+                ];
+            } else {
+                $atual = 0;
+                $data = [
+                    'nome' => $nome,
+                    'email' => $email,
+                    'telefone' => $telefone,
+                    'todosdias' => $todosdias,
+                    'game' => $game,
+                    'pontuacao' => $pontuacao,
+                    'data' => $data,
+                    'atual' => 0,
+                ];
+
+            }
+        } else {
+            $atual = 1;
+            $data = [
+                'nome' => $nome,
+                'email' => $email,
+                'telefone' => $telefone,
+                'todosdias' => $todosdias,
+                'game' => $game,
+                'pontuacao' => $pontuacao,
+                'data' => $data,
+                'atual' => 1,
+            ];
+        }
         // Gravar no banco de dados
-        $gameModel = new GameModel();
-        $data = [
-            'nome' => $nome,
-            'email' => $email,
-            'telefone' => $telefone,
-            'todosdias' => $todosdias,
-            'game' => $game,
-            'pontuacao' => $pontuacao,
-            'data' => date('Y-m-d H:i:s'), // Data atual
-        ];
-
         $gameModel->insertScore($data);
-
+        
         // Obter a posição do jogador
         $position = $gameModel->getPosition($game, $pontuacao, date('Y-m-d'));
 
@@ -53,37 +86,36 @@ class GameController extends BaseController
 
         // Montar a resposta
         $response = [
-            'nome' => $nome,
-            'email' => $email,
-            'telefone' => $telefone,
-            'game' => $game,
-            'pontuacao' => $pontuacao,
-            'posicao' => $position,
-            'top10' => $top10,
+        'nome' => $nome,
+        'email' => $email,
+        'telefone' => $telefone,
+        'game' => $game,
+        'pontuacao' => $pontuacao,
+        'posicao' => $position,
+        'top10' => $top10,
         ];
-
         return $this->respond($response);
     }
 
     public function getTop10()
-{
-    // Verifica se o token está presente no cabeçalho da requisição
-    $token = $this->request->getHeader('Authorization');
+    {
+        // Verifica se o token está presente no cabeçalho da requisição
+        $token = $this->request->getHeader('Authorization');
 
-    if (empty($token) || $token->getValue() !== 'Bearer ' . config('App')->apiSecret) {
-        return $this->failUnauthorized('Token inválido.');
+        if (empty($token) || $token->getValue() !== 'Bearer ' . config('App')->apiSecret) {
+            return $this->failUnauthorized('Token inválido.');
+        }
+
+        $json = $this->request->getJSON();
+
+        // Validação básica para garantir que os campos necessários estejam presentes no JSON
+        if (!isset($json->game) || !isset($json->data)) {
+            return $this->fail('Os campos game e data são obrigatórios no JSON.');
+        }
+
+        $data = date('Y-m-d', strtotime(str_replace('/', '-', $json->data)));
+        $gameModel = new GameModel();
+        $top10 = $gameModel->getTop10($json->game, $data);
+        return $this->respond($top10);
     }
-
-    $json = $this->request->getJSON();
-
-    // Validação básica para garantir que os campos necessários estejam presentes no JSON
-    if (!isset($json->game) || !isset($json->data)) {
-        return $this->fail('Os campos game e data são obrigatórios no JSON.');
-    }
-
-    $data = date('Y-m-d', strtotime(str_replace('/', '-', $json->data)));
-    $gameModel = new GameModel();
-    $top10 = $gameModel->getTop10($json->game, $data);
-    return $this->respond($top10);
-}
 }

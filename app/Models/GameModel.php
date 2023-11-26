@@ -8,7 +8,7 @@ use CodeIgniter\Model;
 class GameModel extends Model
 {
     protected $table = 'scores';
-    protected $allowedFields = ['nome', 'email', 'telefone', 'game', 'pontuacao', 'data', 'todosdias'];
+    protected $allowedFields = ['nome', 'email', 'telefone', 'game', 'pontuacao', 'data', 'todosdias', 'atual'];
 
     public function insertScore($data)
     {
@@ -24,6 +24,7 @@ class GameModel extends Model
             ->where('game', $game)
             ->where('data >=', $startOfDay)
             ->where('data <=', $endOfDay)
+            ->where('atual', '1')
             ->where('pontuacao >', $pontuacao)
             ->countAllResults() + 1;
 
@@ -41,6 +42,7 @@ class GameModel extends Model
             ->where('game', $game)
             ->where('data >=', $startOfDay)
             ->where('data <=', $endOfDay)
+            ->where('atual', '1')
             ->orderBy('pontuacao', 'DESC')
             ->limit(10)
             ->get()
@@ -53,10 +55,30 @@ class GameModel extends Model
         return $top10;
     }
 
+    public function existingScore($email, $game, $data)
+    {
+        //Verificar se o jogador ja tem pontuação no game
+        $dataOriginal = $data;
+        $time = Time::createFromFormat('Y-m-d H:i:s', $dataOriginal);
+        $data = $time->toDateString();
+        $startOfDay = $data . ' 00:00:00';
+        $endOfDay = $data . ' 23:59:59';
+        $score = $this
+            ->select('*')
+            ->where('email', $email)
+            ->where('game', $game)
+            ->where('data >=', $startOfDay)
+            ->where('data <=', $endOfDay)
+            ->where('atual', '1')
+            ->first();
+        return $score;
+    }
+
     public function getScore()
     {
         $score = $this->db->table($this->table)
             ->select('nome, email, telefone, todosdias, data, game, pontuacao')
+            ->where('atual', '1')
             ->orderBy('game', 'ASC')
             ->orderBy('pontuacao', 'DESC')
             ->get()
