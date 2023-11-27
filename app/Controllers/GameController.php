@@ -28,7 +28,11 @@ class GameController extends BaseController
         $todosdias = $json->todosdias ?? '';
         $game = $json->game ?? '';
         $pontuacao = $json->pontuacao ?? 0;
-        $data = date('Y-m-d H:i:s');
+        
+        $time = new \CodeIgniter\I18n\Time();
+        $time->setTimezone('America/Sao_Paulo');
+        $dataAtual = $time->now();
+        $data = $dataAtual->format('Y-m-d H:i:s');
 
         // Verifica se já existe uma pontuação para o jogador no jogo e na data atual
         $existingScore = $gameModel->existingScore($email, $game, $data);

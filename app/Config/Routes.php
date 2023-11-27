@@ -7,7 +7,7 @@ use CodeIgniter\Router\RouteCollection;
  */
 $routes->get('/', 'Home::index');
 
-$routes->get('/export', 'ExportController::index');
+$routes->get('/score', 'ExportController::index');
 
 $routes->group('api', ['namespace' => 'App\Controllers'], function ($routes) {
     $routes->post('save-score', 'GameController::saveScore');
